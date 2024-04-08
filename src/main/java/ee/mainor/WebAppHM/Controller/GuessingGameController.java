@@ -21,10 +21,10 @@ public class GuessingGameController {
     }
 
     @GetMapping("/game/{game_id}/guess/{number}")
-    public String takeGuess(@PathVariable("game_id") Integer gameId, @PathVariable("number") Integer number) {
+    public String takeGuess(@PathVariable("game_id") Long gameId, @PathVariable("number") Integer number) {
         return guessingGameService.takeGuess(gameId, number);
     }
-    
+
     @GetMapping("/game")
     public Long printGameID() {
         return guessingGameService.startGame();

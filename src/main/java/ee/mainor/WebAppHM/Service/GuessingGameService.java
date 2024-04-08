@@ -1,38 +1,45 @@
 package ee.mainor.WebAppHM.Service;
 
-import ee.mainor.WebAppHM.DTO.GuessingGameDTO;
+import ee.mainor.WebAppHM.Entity.Game;
+import ee.mainor.WebAppHM.Repository.GameRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 @Service
 public class GuessingGameService {
-    Random rand = new Random();
-    public List<GuessingGameDTO> gameSaver = new ArrayList<>();
+    private final GameRepository gameRepository;
+    private final Random rand = new Random();
 
-    public Long startGame() {
-        GuessingGameDTO guessingGameDTO = new GuessingGameDTO();
-        guessingGameDTO.setId((long) gameSaver.size());
-        guessingGameDTO.setAnswer(rand.nextInt(100)); // Using nextInt with upper bound only
-        gameSaver.add(guessingGameDTO);
-        return guessingGameDTO.getId();
+    public GuessingGameService(GameRepository gameRepository) {
+        this.gameRepository = gameRepository;
     }
 
-    public String takeGuess(Integer game_id, Integer number) {
-        if (gameSaver.size() - 1 >= game_id) {
-            if (gameSaver.get(game_id).getAnswer() > number) {
-                return "The answer is bigger then " + number;
-            } else if (gameSaver.get(game_id).getAnswer() < number) {
-                return "The answer is lower then " + number;
-            } else if (gameSaver.get(game_id).getAnswer() == number) {
-                return "Congratulations! You got the answer " + gameSaver.get(game_id).getAnswer() + ". Your guess: " + number;
+    public Long startGame() {
+        Game game = new Game();
+        game.setAnswer(rand.nextInt(100)); // Using nextInt with upper bound only
+        Game savedGame = gameRepository.save(game);
+        return savedGame.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public String takeGuess(Long gameId, Integer number) {
+        // Retrieve the game from the database by its ID
+        Game game = gameRepository.findById(gameId).orElse(null);
+
+        if (game != null) {
+            Integer answer = game.getAnswer();
+
+            if (answer > number) {
+                return "The answer is bigger than " + number;
+            } else if (answer < number) {
+                return "The answer is lower than " + number;
+            } else {
+                return "Congratulations! You got the answer " + answer + ". Your guess: " + number;
             }
         } else {
-            return "Your id is invalid";
+            return "Game with ID " + gameId + " not found";
         }
-        return "Unexpected condition occured";
     }
 }
